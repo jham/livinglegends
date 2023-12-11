@@ -6,6 +6,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/1.30.1/date_fns.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <script>
       var rawData = [
@@ -7772,7 +7773,6 @@
                     if (!visible) {
                         continue;
                     }
-                    console.log(meta)
                     if (!meta.hidden && meta._dataset.maxPoints > maxPoints) {
                         maxPoints = meta._dataset.maxPoints
                     }
@@ -7810,10 +7810,12 @@
         return annotations;
       }
       
-      function makeChart(ctx, age, threshold, title) {
+      function makeChartJsChart(ctx, age, threshold, title) {
         return new Chart(ctx, {
           type: 'line',
-          data: formatData(rawData, age, threshold),
+          data: {
+            datasets: formatData(rawData, age, threshold),
+          },
           options: {
             responsive: true,
             scales: {
@@ -7905,7 +7907,8 @@
               heros[datapoint.hero].data.push({x: datapoint.date, y: datapoint.points})
             } else {
               heros[datapoint.hero] = {
-                label: datapoint.hero,
+                label: datapoint.hero, // For chart.js
+                name: datapoint.hero, // For apexcharts
                 data: [{x: datapoint.date, y: datapoint.points}],
                 borderWidth: 1,
                 maxPoints: earliestHighest[datapoint.hero].points,
@@ -7924,23 +7927,89 @@
           bPoints = earliestHighest[b.label].points
           return bPoints - aPoints
         })
-        return {datasets: datasets};
+        return datasets;
       }
     </script>
-  </head>
+
+    <script>
+      function makeXAxisAnnotations() {
+        var annotations = []
+        sets.forEach((set) => {
+          annotations.push(
+            {
+              x: new Date(set.date).getTime(),
+              borderColor: '#666666',
+              label: {
+                style: {
+                  color: '#666666',
+                },
+                text: set.code
+              }
+            })
+          })
+        return annotations
+      }
+
+      function makeApexChart(element, age, threshold, title) {
+        var options = {
+          chart: {
+            type: 'line',
+            animations: {
+              enabled: false,
+              dynamicAnimation: {
+                enabled: true,
+              }
+            },
+          },
+          series: formatData(rawData, age, threshold),
+          xaxis: {
+            type: "datetime"
+          },
+          title: {
+            text: title,
+            style: {
+              fontSize: '20pt',
+            },
+          },
+          legend: {
+            position: 'right',
+          },
+          annotations: {
+            yaxis: [
+              {
+                y: threshold,
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 2,
+              }
+            ],
+            xaxis: makeXAxisAnnotations()
+          },
+        }
+
+        options.annotations.xaxis.forEach((x) => console.log(x))
+
+        var chart = new ApexCharts(element, options);
+
+        chart.render();
+      }
+    </script>
+</head>
 
   <body>
-    <div>
-      <canvas id='ll_adult'></canvas>
+    <div id='ll_adult'>
+      <!-- <canvas id='ll_adult'></canvas> -->
     </div>
     <br>
-    <div>
-      <canvas id='ll_young'></canvas>
+    <div id='ll_young'>
+      <!-- <canvas id='ll_young'></canvas> -->
     </div>
+    <br>
     <div align='right' style='font-family: sans-serif;color: darkgray'>Data last updated 2023-12-05</div>
     <script>
-      makeChart(document.getElementById('ll_adult'), 'Adult', 1000, 'Living Legend – Classic Constructed');
-      makeChart(document.getElementById('ll_young'), 'Young', 500, 'Living Legend – Blitz');
+//      makeChartJsChart(document.getElementById('ll_adult'), 'Adult', 1000, 'Living Legend – Classic Constructed');
+//      makeChartJsChart(document.getElementById('ll_young'), 'Young', 500, 'Living Legend – Blitz');
+      makeApexChart(document.querySelector('#ll_adult'), 'Adult', 1000, 'Living Legend – Classic Constructed');
+      makeApexChart(document.querySelector('#ll_young'), 'Young', 500, 'Living Legend – Blitz')
     </script>
   </body>
 </html>
