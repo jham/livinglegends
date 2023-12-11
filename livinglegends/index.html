@@ -7760,6 +7760,28 @@
             borderColor: 'rgb(255, 99, 132)',
             borderWidth: 2,
             drawTime: 'beforeDatasetsDraw',
+            display: (context) => {
+                // Hide the threshold line if there aren't heros above it
+                // allowing the chart to scale to the heros below
+                var maxPoints = null
+                for (let i = 0; i < context.chart.data.datasets.length; i++) {
+                    meta = context.chart.getDatasetMeta(i)
+                    // meta.hidden isn't set until after the first update,
+                    // so assume it's visible if hidden is null
+                    visible = (meta.hidden == null) || !meta.hidden
+                    if (!visible) {
+                        continue;
+                    }
+                    console.log(meta)
+                    if (!meta.hidden && meta._dataset.maxPoints > maxPoints) {
+                        maxPoints = meta._dataset.maxPoints
+                    }
+                }
+                if (maxPoints == null) {
+                    return true
+                }
+                return maxPoints >= threshold
+            }
           }];
         sets.forEach((set) => {
           annotations.push(
@@ -7830,6 +7852,8 @@
       }
 
       function setLineLabelY(context) {
+        // Keeps the set labels near the top of the chart,
+        // regardless of the scale of the Y axis
         maxY = context.chart.scales.y.max;
         return maxY - (0.05 * maxY);
       }
@@ -7913,7 +7937,7 @@
     <div>
       <canvas id='ll_young'></canvas>
     </div>
-    <div align='right' style='font-family: sans-serif;color: darkgray'>Last updated 2023-12-05</div>
+    <div align='right' style='font-family: sans-serif;color: darkgray'>Data last updated 2023-12-05</div>
     <script>
       makeChart(document.getElementById('ll_adult'), 'Adult', 1000, 'Living Legend – Classic Constructed');
       makeChart(document.getElementById('ll_young'), 'Young', 500, 'Living Legend – Blitz');
