@@ -2,10 +2,6 @@
 <html lang='en'>
   <title>Living Legends</title>
   <head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/1.30.1/date_fns.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <script>
@@ -7735,10 +7731,10 @@
 
     <script>
       var sets = [
-      //  {code: 'WTR', date: '2019-10-11'},
-      //  {code: 'ARC', date: '2020-03-27'},
-      //  {code: 'CRU', date: '2020-08-28'},
-      //  {code: 'MON', date: '2021-05-07'},
+        {code: 'WTR', date: '2019-10-11'},
+        {code: 'ARC', date: '2020-03-27'},
+        {code: 'CRU', date: '2020-08-28'},
+        {code: 'MON', date: '2021-05-07'},
         {code: 'ELE', date: '2021-09-24'},
         {code: 'EVR', date: '2022-02-04'},
         {code: 'HP1', date: '2022-05-06'},
@@ -7752,114 +7748,6 @@
     </script>
 
     <script>
-      function getAnnotations(threshold) {
-        var annotations = [
-          {
-            type: 'line',
-            scaleID: 'y',
-            value: threshold,
-            borderColor: 'rgb(255, 99, 132)',
-            borderWidth: 2,
-            drawTime: 'beforeDatasetsDraw',
-            display: (context) => {
-                // Hide the threshold line if there aren't heros above it
-                // allowing the chart to scale to the heros below
-                var maxPoints = null
-                for (let i = 0; i < context.chart.data.datasets.length; i++) {
-                    meta = context.chart.getDatasetMeta(i)
-                    // meta.hidden isn't set until after the first update,
-                    // so assume it's visible if hidden is null
-                    visible = (meta.hidden == null) || !meta.hidden
-                    if (!visible) {
-                        continue;
-                    }
-                    if (!meta.hidden && meta._dataset.maxPoints > maxPoints) {
-                        maxPoints = meta._dataset.maxPoints
-                    }
-                }
-                if (maxPoints == null) {
-                    return true
-                }
-                return maxPoints >= threshold
-            }
-          }];
-        sets.forEach((set) => {
-          annotations.push(
-            {
-              type: 'line',
-              scaleID: 'x',
-              value: set.date,
-              borderColor: 'rgb(178, 190, 181)',
-              borderDash: [5, 5],
-              borderWidth: 1,
-              drawTime: 'beforeDatasetsDraw',
-            });
-          annotations.push(
-            {
-              type: 'label',
-              content: set.code,
-              xValue: set.date,
-              enabled: true,
-              yValue: (context) => setLineLabelY(context),
-              backgroundColor: 'rgba(245,245,245)',
-              color: '#666666',
-              borderRadius: 6,
-              drawTime: 'beforeDatasetsDraw',
-            });
-        });
-        return annotations;
-      }
-      
-      function makeChartJsChart(ctx, age, threshold, title) {
-        return new Chart(ctx, {
-          type: 'line',
-          data: {
-            datasets: formatData(rawData, age, threshold),
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true
-              },
-              x: {
-                type: 'time',
-                time: {
-                  unit: 'month'
-                }
-              }
-            },
-            elements: {
-              point: {
-                pointStyle: false
-              }
-            },
-            plugins: {
-              legend: {
-                position: 'right'
-              },
-              title: {
-                text: title,
-                display: true,
-                font: {
-                  size: 36
-                }
-              },
-              annotation: {
-                annotations: getAnnotations(threshold)
-              }
-            }
-          }
-        });
-      }
-
-      function setLineLabelY(context) {
-        // Keeps the set labels near the top of the chart,
-        // regardless of the scale of the Y axis
-        maxY = context.chart.scales.y.max;
-        return maxY - (0.05 * maxY);
-      }
-
       function formatData(rawData, age, threshold) {
         // Record the earliest score for a hero that's their max score
         // above the threshold. This is used to stop the graph after that
@@ -7907,10 +7795,8 @@
               heros[datapoint.hero].data.push({x: datapoint.date, y: datapoint.points})
             } else {
               heros[datapoint.hero] = {
-                label: datapoint.hero, // For chart.js
-                name: datapoint.hero, // For apexcharts
+                name: datapoint.hero,
                 data: [{x: datapoint.date, y: datapoint.points}],
-                borderWidth: 1,
                 maxPoints: earliestHighest[datapoint.hero].points,
               }
             }
@@ -7923,8 +7809,8 @@
         }
         // Reverse sort by points
         datasets.sort((a, b) => {          
-          aPoints = earliestHighest[a.label].points
-          bPoints = earliestHighest[b.label].points
+          aPoints = earliestHighest[a.name].points
+          bPoints = earliestHighest[b.name].points
           return bPoints - aPoints
         })
         return datasets;
@@ -8009,18 +7895,12 @@
 </head>
 
   <body>
-    <div id='ll_adult'>
-      <!-- <canvas id='ll_adult'></canvas> -->
-    </div>
+    <div id='ll_adult'></div>
     <br>
-    <div id='ll_young'>
-      <!-- <canvas id='ll_young'></canvas> -->
-    </div>
+    <div id='ll_young'></div>
     <br>
     <div align='right' style='font-family: sans-serif;color: darkgray'>Data last updated 2023-12-05</div>
     <script>
-//      makeChartJsChart(document.getElementById('ll_adult'), 'Adult', 1000, 'Living Legend – Classic Constructed');
-//      makeChartJsChart(document.getElementById('ll_young'), 'Young', 500, 'Living Legend – Blitz');
       makeApexChart(document.querySelector('#ll_adult'), 'Adult', 1000, 'Living Legend – Classic Constructed');
       makeApexChart(document.querySelector('#ll_young'), 'Young', 500, 'Living Legend – Blitz')
     </script>
