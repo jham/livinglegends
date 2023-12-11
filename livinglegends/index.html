@@ -7938,13 +7938,14 @@
           annotations.push(
             {
               x: new Date(set.date).getTime(),
-              borderColor: '#666666',
+              borderColor: '#999999',
               label: {
                 style: {
                   color: '#666666',
                 },
                 text: set.code
-              }
+              },
+              strokeDashArray: [5, 5],
             })
           })
         return annotations
@@ -7958,8 +7959,14 @@
               enabled: false,
               dynamicAnimation: {
                 enabled: true,
+                speed: 350,
               }
             },
+            height: '600',
+            width: '100%',
+          },
+          stroke: {
+            width: 3,
           },
           series: formatData(rawData, age, threshold),
           xaxis: {
@@ -7970,23 +7977,29 @@
             style: {
               fontSize: '20pt',
             },
+            align: 'center',
           },
           legend: {
             position: 'right',
+            formatter: function(seriesName, opts) {
+              // Bold the living legends
+              if (opts.w.config.series[opts.seriesIndex].maxPoints >= threshold) {
+                return '<strong>' + seriesName + '</strong>'
+              }
+              return seriesName
+            },
           },
           annotations: {
             yaxis: [
               {
                 y: threshold,
                 borderColor: 'rgb(255, 99, 132)',
-                borderWidth: 2,
+                strokeDashArray: [0],
               }
             ],
             xaxis: makeXAxisAnnotations()
           },
         }
-
-        options.annotations.xaxis.forEach((x) => console.log(x))
 
         var chart = new ApexCharts(element, options);
 
